@@ -1,0 +1,13 @@
+
+*(Die GUID `{bf967aba-0de6-11d0-a285-00aa003049e30}` ist die Node-Type GUID für Benutzer-Objekte im ADUC).*
+
+### 3. ADUC öffnen
+1. Öffne `dsa.msc` (Active Directory-Benutzer und -Computer).
+2. Öffne die Eigenschaften eines Benutzers.
+3. Es sollte nun ein neuer Reiter "HIE Quota Extension" (oder ähnlich) erscheinen.
+
+## Fehlerbehebung
+- **Reiter erscheint nicht:** Überprüfe die Registry-Einträge und ob die DLL im GAC ist.
+- **Fehler beim Laden:** Überprüfe die `mmc.exe.config`. Ohne diese lädt MMC die .NET 4.8 DLL oft nicht.
+- **HIE Attribute nicht gefunden:** Stelle sicher, dass das `hie-schema.ldf` Schema bereits in das AD importiert wurde.
+- **Logging:** Das Snap-In schreibt Logs in `%ProgramData%\HieQuotaMMC\HieQuotaMMC.log`.

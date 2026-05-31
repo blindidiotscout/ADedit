@@ -1,0 +1,9 @@
+
+*(Achtung: Dies erfordert Administratorrechte und betrifft alle MMC-Konsolen auf dem Server!)*
+
+## Registrierung & Deployment
+
+### 1. Assembly im GAC registrieren
+Die DLL muss im Global Assembly Cache (GAC) registriert werden, damit MMC sie finden kann.
+Öffne eine Developer Command Prompt für Visual Studio als Administrator:
+
