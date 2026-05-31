@@ -4,6 +4,16 @@
 
 extern HINSTANCE g_hInst;
 
+// Konstruktor
+CHieMmcPlugin::CHieMmcPlugin() : m_cRef(1), m_bstrADsPath(NULL), m_pDirObj(NULL) {
+}
+
+// Destruktor
+CHieMmcPlugin::~CHieMmcPlugin() {
+    if (m_bstrADsPath) SysFreeString(m_bstrADsPath);
+    if (m_pDirObj) m_pDirObj->Release();
+}
+
 // Dialog Proc für unsere MMC Eigenschaftenseite
 INT_PTR CALLBACK HieQuotaDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     CHieMmcPlugin *pThis = (CHieMmcPlugin *)GetWindowLongPtr(hDlg, GWLP_USERDATA);
@@ -17,13 +27,23 @@ INT_PTR CALLBACK HieQuotaDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
             return TRUE;
         }
         case WM_COMMAND:
+            // In einem Property Sheet ruft man NICHT EndDialog auf!
+            // Das Framework übernimmt das Schließen.
             if (LOWORD(wParam) == IDOK) {
                 if (pThis) pThis->SaveAdsiData(hDlg);
-                EndDialog(hDlg, IDOK);
-            } else if (LOWORD(wParam) == IDCANCEL) {
-                EndDialog(hDlg, IDCANCEL);
             }
             return TRUE;
+        case WM_NOTIFY: {
+            NMHDR* pnmh = (NMHDR*)lParam;
+            switch (pnmh->code) {
+                case PSN_APPLY:
+                    // Wird aufgerufen, wenn der User OK oder Übernehmen klickt
+                    if (pThis) pThis->SaveAdsiData(hDlg);
+                    SetWindowLongPtr(hDlg, DWLP_MSGRESULT, PSNRET_NOERROR);
+                    return TRUE;
+            }
+            break;
+        }
     }
     return FALSE;
 }
@@ -161,18 +181,29 @@ STDMETHODIMP CHieMmcPlugin::SaveAdsiData(HWND hWnd) {
 
 // --- Class Factory & DLL Exports (Standard COM Boilerplate) ---
 class CHieMmcPluginClassFactory : public IClassFactory {
+private:
+    LONG m_cRef;
 public:
+    CHieMmcPluginClassFactory() : m_cRef(1) {}
+    ~CHieMmcPluginClassFactory() {}
+
     STDMETHOD(QueryInterface)(REFIID riid, void **ppv) {
         if (riid == IID_IUnknown || riid == IID_IClassFactory) {
             *ppv = static_cast<IClassFactory*>(this);
             AddRef();
             return S_OK;
         }
+        *ppv = NULL;
         return E_NOINTERFACE;
     }
-    STDMETHOD_(ULONG, AddRef)() { return 2; }
-    STDMETHOD_(ULONG, Release)() { return 1; }
+    STDMETHOD_(ULONG, AddRef)() { return InterlockedIncrement(&m_cRef); }
+    STDMETHOD_(ULONG, Release)() {
+        LONG cRef = InterlockedDecrement(&m_cRef);
+        if (cRef == 0) delete this;
+        return cRef;
+    }
     STDMETHOD(CreateInstance)(IUnknown* pUnkOuter, REFIID riid, void** ppv) {
+        if (pUnkOuter) return CLASS_E_NOAGGREGATION;
         CHieMmcPlugin *pObj = new CHieMmcPlugin();
         if (!pObj) return E_OUTOFMEMORY;
         HRESULT hr = pObj->QueryInterface(riid, ppv);
@@ -189,6 +220,7 @@ STDAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv) {
         CHieMmcPluginClassFactory *pFactory = new CHieMmcPluginClassFactory();
         if (!pFactory) return E_OUTOFMEMORY;
         HRESULT hr = pFactory->QueryInterface(riid, ppv);
+        pFactory->Release(); // Lokale Referenz freigeben
         return hr;
     }
     return CLASS_E_CLASSNOTAVAILABLE;
@@ -199,6 +231,8 @@ STDAPI DllRegisterServer() { return S_OK; } // Vereinfacht: Registry-Einträge m
 STDAPI DllUnregisterServer() { return S_OK; }
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved) {
-    g_hInst = hModule;
+    if (ul_reason_for_call == DLL_PROCESS_ATTACH) {
+        g_hInst = hModule;
+    }
     return TRUE;
 }

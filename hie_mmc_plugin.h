@@ -11,9 +11,9 @@
 DEFINE_GUID(CLSID_HieMmcPlugin, 
 0xe5a2b3c4, 0xd5e6, 0xf7a8, 0xb9, 0xc0, 0xd1, 0xe2, 0xf3, 0xa4, 0xb5, 0xc6);
 
-// {F1E2D3C4-B5A6-9786-5432-10FEDCBA9876}
-DEFINE_GUID(IID_IShellPropSheetExt, 
-0xf1e2d3c4, 0xb5a6, 0x9786, 0x54, 0x32, 0x10, 0xfe, 0xdc, 0xba, 0x98, 0x76);
+// HINWEIS: IID_IShellPropSheetExt ist bereits im Windows SDK (shlobj.h) definiert.
+// Die vorherige manuelle Definition mit einer falschen GUID wurde entfernt,
+// da sie den COM-Mechanismus zerstört und das Plugin unsichtbar für die MMC macht.
 
 #define HIE_QUOTA_SEND_PROP    L"HIEprohibitsendquota"
 #define HIE_QUOTA_RECEIVE_PROP L"HIEprohibitreceivequota"
