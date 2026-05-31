@@ -31,7 +31,7 @@ DEFINE_GUID(CLSID_HieMmcPlugin,
 #define IDT_EX_RECEIVE         105
 #define IDT_EX_STORAGE         106
 
-class CHieMmcPlugin : public IShellPropSheetExt {
+class CHieMmcPlugin : public IShellExtInit, public IShellPropSheetExt {
 public:
     CHieMmcPlugin();
     ~CHieMmcPlugin();
@@ -40,6 +40,9 @@ public:
     STDMETHOD(QueryInterface)(REFIID riid, void **ppv);
     STDMETHOD_(ULONG, AddRef)();
     STDMETHOD_(ULONG, Release)();
+
+    // IShellExtInit
+    STDMETHOD(Initialize)(LPCITEMIDLIST pidlFolder, IDataObject *pdtobj, HKEY hkeyProgID);
 
     // IShellPropSheetExt
     STDMETHOD(AddPages)(LPFNADDPROPSHEETPAGE lpfnAddPage, LPARAM lParam);

@@ -2,6 +2,10 @@
 #include <stdio.h>
 #include <strsafe.h>
 
+#ifndef CFSTR_ADSPATH
+#define CFSTR_ADSPATH L"AdsPath"
+#endif
+
 extern HINSTANCE g_hInst;
 
 // Konstruktor
@@ -50,13 +54,16 @@ INT_PTR CALLBACK HieQuotaDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 
 // --- IUnknown Implementation ---
 STDMETHODIMP CHieMmcPlugin::QueryInterface(REFIID riid, void **ppv) {
-    if (riid == IID_IUnknown || riid == IID_IShellPropSheetExt) {
+    if (riid == IID_IUnknown || riid == IID_IShellExtInit) {
+        *ppv = static_cast<IShellExtInit*>(this);
+    } else if (riid == IID_IShellPropSheetExt) {
         *ppv = static_cast<IShellPropSheetExt*>(this);
-        AddRef();
-        return S_OK;
+    } else {
+        *ppv = NULL;
+        return E_NOINTERFACE;
     }
-    *ppv = NULL;
-    return E_NOINTERFACE;
+    AddRef();
+    return S_OK;
 }
 
 STDMETHODIMP_(ULONG) CHieMmcPlugin::AddRef() {
@@ -69,9 +76,67 @@ STDMETHODIMP_(ULONG) CHieMmcPlugin::Release() {
     return cRef;
 }
 
+// --- IShellExtInit Implementation ---
+STDMETHODIMP CHieMmcPlugin::Initialize(LPCITEMIDLIST pidlFolder, IDataObject *pdtobj, HKEY hkeyProgID) {
+    if (!pdtobj) return E_INVALIDARG;
+
+    // Vorherige Verbindungen trennen
+    if (m_pDirObj) {
+        m_pDirObj->Release();
+        m_pDirObj = NULL;
+    }
+    if (m_bstrADsPath) {
+        SysFreeString(m_bstrADsPath);
+        m_bstrADsPath = NULL;
+    }
+
+    // ADsPath aus dem IDataObject extrahieren (wird von ADUC bereitgestellt)
+    FORMATETC fmt = { 0 };
+    fmt.cfFormat = RegisterClipboardFormat(CFSTR_ADSPATH);
+    fmt.ptd = NULL;
+    fmt.dwAspect = DVASPECT_CONTENT;
+    fmt.lindex = -1;
+    fmt.tymed = TYMED_HGLOBAL;
+
+    STGMEDIUM stg = { 0 };
+    stg.tymed = TYMED_HGLOBAL;
+
+    HRESULT hr = pdtobj->GetData(&fmt, &stg);
+    if (FAILED(hr)) {
+        // Fallback auf DistinguishedName, falls AdsPath nicht verfügbar
+        fmt.cfFormat = RegisterClipboardFormat(L"DistinguishedName");
+        hr = pdtobj->GetData(&fmt, &stg);
+        if (FAILED(hr)) {
+            return E_FAIL;
+        }
+    }
+
+    LPOLESTR pwszPath = (LPOLESTR)GlobalLock(stg.hGlobal);
+    if (!pwszPath) {
+        ReleaseStgMedium(&stg);
+        return E_FAIL;
+    }
+
+    m_bstrADsPath = SysAllocString(pwszPath);
+    GlobalUnlock(stg.hGlobal);
+    ReleaseStgMedium(&stg);
+
+    if (!m_bstrADsPath) return E_OUTOFMEMORY;
+
+    // Mit dem ADSI-Objekt verbinden
+    hr = ADsGetObject(m_bstrADsPath, IID_IDirectoryObject, (void**)&m_pDirObj);
+    if (FAILED(hr)) {
+        SysFreeString(m_bstrADsPath);
+        m_bstrADsPath = NULL;
+        return hr;
+    }
+
+    return S_OK;
+}
+
 // --- IShellPropSheetExt Implementation ---
 STDMETHODIMP CHieMmcPlugin::AddPages(LPFNADDPROPSHEETPAGE lpfnAddPage, LPARAM lParam) {
-    PROPSHEETPAGE psp;
+    PROPSHEETPAGE psp = {0}; // Wichtig: Struktur mit 0 initialisieren (vermeidet Garbage in Unions)
     HPROPSHEETPAGE hPage;
 
     psp.dwSize = sizeof(PROPSHEETPAGE);
@@ -81,8 +146,6 @@ STDMETHODIMP CHieMmcPlugin::AddPages(LPFNADDPROPSHEETPAGE lpfnAddPage, LPARAM lP
     psp.pszTitle = L"HIE Quota";
     psp.pfnDlgProc = HieQuotaDlgProc;
     psp.lParam = (LPARAM)this;
-    psp.pcRefParent = NULL;
-    psp.pfnCallback = NULL;
 
     AddRef(); // Für die Seite referenzieren
 
