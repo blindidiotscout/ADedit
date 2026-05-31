@@ -205,7 +205,7 @@ function Show-GUI {
             
             $userEntry.PutEx(2, "proxyAddresses", $newProxies) # ADS_PROPERTY_UPDATE
 
-            $userEntry.SetChanges()
+            $userEntry.CommitChanges()
             
             Write-Log "Benutzer $script:UserDN erfolgreich aktualisiert."
             [System.Windows.Forms.MessageBox]::Show("Erfolgreich gespeichert!", "Info")

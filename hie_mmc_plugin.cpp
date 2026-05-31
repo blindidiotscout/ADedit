@@ -31,11 +31,8 @@ INT_PTR CALLBACK HieQuotaDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
             return TRUE;
         }
         case WM_COMMAND:
-            // In einem Property Sheet ruft man NICHT EndDialog auf!
-            // Das Framework übernimmt das Schließen.
-            if (LOWORD(wParam) == IDOK) {
-                if (pThis) pThis->SaveAdsiData(hDlg);
-            }
+            // In einem Property Sheet werden OK/Cancel vom Framework behandelt.
+            // Speichern erfolgt ausschließlich über PSN_APPLY.
             return TRUE;
         case WM_NOTIFY: {
             NMHDR* pnmh = (NMHDR*)lParam;

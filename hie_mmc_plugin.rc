@@ -29,6 +29,6 @@ BEGIN
     LTEXT           "mDBStorageQuota:", IDC_STATIC, 20, 135, 100, 8
     EDITTEXT        IDT_EX_STORAGE, 130, 135, 100, 14, ES_READONLY
 
-    DEFPUSHBUTTON   "OK", IDOK, 100, 170, 50, 14
-    PUSHBUTTON      "Cancel", IDCANCEL, 160, 170, 50, 14
+    // OK und Abbrechen Buttons werden vom MMC Property Sheet Framework bereitgestellt
+    // und dürfen NICHT im Dialog-Template definiert werden.
 END
