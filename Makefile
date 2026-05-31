@@ -1,14 +1,14 @@
 # Makefile für das HIE MMC Plugin (MinGW / GCC)
 
 CC=gcc
-LD=g++
+LD=gcc
 RC=windres
 
 # Ziel-DLL
 TARGET=hie_mmc_plugin.dll
 
 # Quelldateien
-C_SRC=hie_mmc_plugin.cpp
+C_SRC=hie_mmc_plugin.c
 RC_SRC=hie_mmc_plugin.rc
 OBJ=hie_mmc_plugin.o
 RES=hie_mmc_plugin.res

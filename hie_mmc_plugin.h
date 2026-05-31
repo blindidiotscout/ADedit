@@ -11,10 +11,6 @@
 DEFINE_GUID(CLSID_HieMmcPlugin, 
 0xe5a2b3c4, 0xd5e6, 0xf7a8, 0xb9, 0xc0, 0xd1, 0xe2, 0xf3, 0xa4, 0xb5, 0xc6);
 
-// HINWEIS: IID_IShellPropSheetExt ist bereits im Windows SDK (shlobj.h) definiert.
-// Die vorherige manuelle Definition mit einer falschen GUID wurde entfernt,
-// da sie den COM-Mechanismus zerstört und das Plugin unsichtbar für die MMC macht.
-
 #define HIE_QUOTA_SEND_PROP    L"HIEprohibitsendquota"
 #define HIE_QUOTA_RECEIVE_PROP L"HIEprohibitreceivequota"
 #define HIE_QUOTA_STORAGE_PROP L"HIEstoragequotalimit"
@@ -31,31 +27,15 @@ DEFINE_GUID(CLSID_HieMmcPlugin,
 #define IDT_EX_RECEIVE         105
 #define IDT_EX_STORAGE         106
 
-class CHieMmcPlugin : public IShellExtInit, public IShellPropSheetExt {
-public:
-    CHieMmcPlugin();
-    ~CHieMmcPlugin();
-
-    // IUnknown
-    STDMETHOD(QueryInterface)(REFIID riid, void **ppv);
-    STDMETHOD_(ULONG, AddRef)();
-    STDMETHOD_(ULONG, Release)();
-
-    // IShellExtInit
-    STDMETHOD(Initialize)(LPCITEMIDLIST pidlFolder, IDataObject *pdtobj, HKEY hkeyProgID);
-
-    // IShellPropSheetExt
-    STDMETHOD(AddPages)(LPFNADDPROPSHEETPAGE lpfnAddPage, LPARAM lParam);
-    STDMETHOD(ReplacePage)(EXPPS uPageID, LPFNADDPROPSHEETPAGE lpfnReplacePage, LPARAM lParam);
-
-    // Helper
-    STDMETHOD(LoadAdsiData)(HWND hWnd);
-    STDMETHOD(SaveAdsiData)(HWND hWnd);
-
-private:
+typedef struct CHieMmcPlugin {
+    const IShellExtInitVtbl *lpVtblIShellExtInit;
+    const IShellPropSheetExtVtbl *lpVtblIShellPropSheetExt;
     LONG m_cRef;
     BSTR m_bstrADsPath;
     IDirectoryObject *m_pDirObj;
-};
+} CHieMmcPlugin;
+
+CHieMmcPlugin* CHieMmcPlugin_Create();
+void CHieMmcPlugin_Destroy(CHieMmcPlugin* pThis);
 
 #endif // HIE_MMC_PLUGIN_H
