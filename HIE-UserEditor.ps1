@@ -86,7 +86,7 @@ function Show-GUI {
     foreach ($field in $fields) {
         $lbl = New-Object System.Windows.Forms.Label
         $lbl.Location = New-Object System.Drawing.Point(10, $yPos + 3)
-        $lbl.Text = "$field:"
+        $lbl.Text = "${field}:"
         $lbl.AutoSize = $true
         $form.Controls.Add($lbl)
 
