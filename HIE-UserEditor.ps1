@@ -84,14 +84,19 @@ function Show-GUI {
     $textBoxes = @{}
 
     foreach ($field in $fields) {
+        # Y-Koordinaten vorab berechnen, um Probleme mit Operatorrangfolge
+        # in New-Object-Aufrufen zu vermeiden (siehe Commit-History).
+        $lblY = $yPos + 3
+        $txtY = $yPos
+
         $lbl = New-Object System.Windows.Forms.Label
-        $lbl.Location = New-Object System.Drawing.Point(10, $yPos + 3)
+        $lbl.Location = New-Object System.Drawing.Point(10, $lblY)
         $lbl.Text = "${field}:"
         $lbl.AutoSize = $true
         $form.Controls.Add($lbl)
 
         $txt = New-Object System.Windows.Forms.TextBox
-        $txt.Location = New-Object System.Drawing.Point(150, $yPos)
+        $txt.Location = New-Object System.Drawing.Point(150, $txtY)
         $txt.Size = New-Object System.Drawing.Size(220, 20)
         $form.Controls.Add($txt)
         
@@ -99,8 +104,9 @@ function Show-GUI {
         $yPos += 30
     }
 
+    $saveBtnY = $yPos + 10
     $btnSave = New-Object System.Windows.Forms.Button
-    $btnSave.Location = New-Object System.Drawing.Point(150, $yPos + 10)
+    $btnSave.Location = New-Object System.Drawing.Point(150, $saveBtnY)
     $btnSave.Size = New-Object System.Drawing.Size(100, 30)
     $btnSave.Text = "Speichern"
     $form.Controls.Add($btnSave)
