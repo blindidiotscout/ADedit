@@ -1,4 +1,0 @@
-
-### 2. MMC Snap-In registrieren
-Das Snap-In muss in der Registry eingetragen werden. Erstelle eine `.reg`-Datei mit folgendem Inhalt und führe sie aus:
-

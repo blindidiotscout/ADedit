@@ -1,0 +1,259 @@
+<Window x:Class="HieUserEditor.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:HieUserEditor.ViewModels"
+        Title="HIE Benutzer-Editor"
+        Height="720"
+        Width="1100"
+        WindowStartupLocation="CenterScreen"
+        MinWidth="900"
+        MinHeight="600">
+    <Window.DataContext>
+        <vm:MainViewModel />
+    </Window.DataContext>
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+    </Window.Resources>
+
+    <DockPanel>
+        <!-- Statusleiste -->
+        <StatusBar DockPanel.Dock="Bottom" Background="#F0F0F0">
+            <StatusBarItem>
+                <TextBlock Text="{Binding StatusMessage}" />
+            </StatusBarItem>
+            <Separator Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}" />
+            <StatusBarItem Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}">
+                <ProgressBar IsIndeterminate="True" Width="150" Height="16" />
+            </StatusBarItem>
+        </StatusBar>
+
+        <!-- Menü -->
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="_Datei">
+                <MenuItem Header="_Verbindungseinstellungen..."
+                          Command="{Binding ShowSettingsCommand}" />
+                <Separator />
+                <MenuItem Header="_Beenden" Click="ExitClick" />
+            </MenuItem>
+            <MenuItem Header="_Aktion">
+                <MenuItem Header="Benutzer _aktivieren"
+                          Command="{Binding EnableUserCommand}" />
+                <MenuItem Header="Benutzer _deaktivieren"
+                          Command="{Binding DisableUserCommand}" />
+                <Separator />
+                <MenuItem Header="_Passwort zurücksetzen..."
+                          Command="{Binding ResetPasswordCommand}" />
+            </MenuItem>
+            <MenuItem Header="_Hilfe">
+                <MenuItem Header="_Über..." Click="AboutClick" />
+            </MenuItem>
+        </Menu>
+
+        <Grid Margin="5">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- Suchleiste -->
+            <Border Grid.Row="0"
+                    Background="#F5F5F5"
+                    BorderBrush="#DDD"
+                    BorderThickness="1"
+                    Padding="5"
+                    Margin="0,0,0,5">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Column="0"
+                               Text="Suche:"
+                               VerticalAlignment="Center"
+                               Margin="0,0,5,0" />
+                    <TextBox Grid.Column="1"
+                             Text="{Binding SearchTerm, UpdateSourceTrigger=PropertyChanged}"
+                             VerticalAlignment="Center"
+                             Padding="4,2" />
+                    <ComboBox Grid.Column="2"
+                              ItemsSource="{Binding SearchTypes}"
+                              SelectedItem="{Binding SearchType}"
+                              Width="120"
+                              Margin="5,0,0,0"
+                              VerticalAlignment="Center" />
+                    <Button Grid.Column="3"
+                            Content="🔍 Suchen"
+                            Command="{Binding SearchCommand}"
+                            Padding="10,4"
+                            Margin="5,0,0,0" />
+                    <Button Grid.Column="4"
+                            Content="Alle anzeigen"
+                            Command="{Binding ListAllCommand}"
+                            Padding="10,4"
+                            Margin="5,0,0,0" />
+                    <Button Grid.Column="5"
+                            Content="Abbrechen"
+                            Command="{Binding CancelCommand}"
+                            Padding="10,4"
+                            Margin="5,0,0,0" />
+                </Grid>
+            </Border>
+
+            <!-- Hauptinhalt -->
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="3*" MinWidth="320" />
+                    <ColumnDefinition Width="5" />
+                    <ColumnDefinition Width="2*" MinWidth="380" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Benutzerliste -->
+                <DataGrid Grid.Column="0"
+                          ItemsSource="{Binding Users}"
+                          SelectedItem="{Binding SelectedUser}"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True"
+                          SelectionMode="Single"
+                          GridLinesVisibility="Horizontal"
+                          AlternatingRowBackground="#F9F9F9"
+                          HeadersVisibility="Column">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Anmeldename"
+                                            Binding="{Binding SamAccountName}"
+                                            Width="120" />
+                        <DataGridTextColumn Header="Anzeigename"
+                                            Binding="{Binding DisplayName}"
+                                            Width="*" />
+                        <DataGridTextColumn Header="E-Mail"
+                                            Binding="{Binding Email}"
+                                            Width="180" />
+                        <DataGridCheckBoxColumn Header="Aktiv"
+                                                Binding="{Binding Enabled}"
+                                                Width="50" />
+                        <DataGridTextColumn Header="OU"
+                                            Binding="{Binding Ou}"
+                                            Width="*" />
+                    </DataGrid.Columns>
+                </DataGrid>
+
+                <GridSplitter Grid.Column="1"
+                              Width="5"
+                              HorizontalAlignment="Stretch"
+                              Background="#DDD" />
+
+                <!-- Detail-Panel -->
+                <Grid Grid.Column="2">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <!-- Benutzerinfo -->
+                    <Border Grid.Row="0"
+                            BorderBrush="#DDD"
+                            BorderThickness="1"
+                            Padding="8"
+                            Margin="0,0,0,5">
+                        <StackPanel>
+                            <TextBlock Text="{Binding SelectedUser.DisplayName, FallbackValue='Kein Benutzer ausgewählt'}"
+                                       FontWeight="Bold"
+                                       FontSize="14" />
+                            <TextBlock Text="{Binding SelectedUser.SamAccountName, FallbackValue=''}"
+                                       Foreground="#666"
+                                       FontSize="11" />
+                            <TextBlock Text="{Binding SelectedUser.DistinguishedName, FallbackValue=''}"
+                                       Foreground="#999"
+                                       TextWrapping="Wrap"
+                                       FontSize="10"
+                                       Margin="0,3,0,0" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Aktions-Buttons -->
+                    <WrapPanel Grid.Row="1" Margin="0,0,0,5">
+                        <Button Content="✓ Aktivieren"
+                                Command="{Binding EnableUserCommand}"
+                                Padding="10,4"
+                                Margin="0,0,5,0" />
+                        <Button Content="✗ Deaktivieren"
+                                Command="{Binding DisableUserCommand}"
+                                Padding="10,4"
+                                Margin="0,0,5,0" />
+                        <Button Content="🔑 Passwort zurücksetzen"
+                                Command="{Binding ResetPasswordCommand}"
+                                Padding="10,4" />
+                    </WrapPanel>
+
+                    <!-- Gruppenverwaltung -->
+                    <GroupBox Grid.Row="2"
+                              Header="Gruppenmitgliedschaften"
+                              Padding="5">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+
+                            <DockPanel Grid.Row="0">
+                                <TextBlock DockPanel.Dock="Top"
+                                           Text="Aktuelle Gruppen:"
+                                           FontWeight="Bold"
+                                           Margin="0,0,0,3" />
+                                <Button DockPanel.Dock="Bottom"
+                                        Content="← Aus Gruppe entfernen"
+                                        Command="{Binding RemoveFromGroupCommand}"
+                                        HorizontalAlignment="Left"
+                                        Padding="8,3"
+                                        Margin="0,3,0,0" />
+                                <ListBox ItemsSource="{Binding SelectedUser.MemberOf}"
+                                         SelectedItem="{Binding SelectedMemberGroup}">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Name}" Padding="2" />
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </DockPanel>
+
+                            <GridSplitter Grid.Row="1"
+                                          Height="5"
+                                          HorizontalAlignment="Stretch"
+                                          Background="#DDD"
+                                          Margin="0,5" />
+
+                            <TextBlock Grid.Row="2"
+                                       Text="Verfügbare Gruppen:"
+                                       FontWeight="Bold"
+                                       Margin="0,5,0,3" />
+
+                            <DockPanel Grid.Row="3">
+                                <Button DockPanel.Dock="Top"
+                                        Content="→ Zur Gruppe hinzufügen"
+                                        Command="{Binding AddToGroupCommand}"
+                                        HorizontalAlignment="Left"
+                                        Padding="8,3"
+                                        Margin="0,0,0,3" />
+                                <ListBox ItemsSource="{Binding AvailableGroups}"
+                                         SelectedItem="{Binding SelectedAvailableGroup}">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Name}" Padding="2" />
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </DockPanel>
+                        </Grid>
+                    </GroupBox>
+                </Grid>
+            </Grid>
+        </Grid>
+    </DockPanel>
+</Window>
