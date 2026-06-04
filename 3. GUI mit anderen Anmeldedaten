@@ -1,0 +1,2 @@
+$cred = Get-Credential   # fragt Benutzername + Passwort ab
+.\HIE-UserEditor.ps1 -DomainController "dc01.firma.local" -SamAccountName "jdoe" -Credential $cred
