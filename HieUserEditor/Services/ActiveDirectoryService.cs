@@ -68,7 +68,8 @@ namespace HieUserEditor.Services
                         break;
                 }
 
-                using var enumerator = UserPrincipal.FindAll(filter).GetEnumerator();
+                using var searcher = new PrincipalSearcher(filter);
+                using var enumerator = searcher.FindAll().GetEnumerator();
                 while (enumerator.MoveNext())
                 {
                     if (cancellationToken.IsCancellationRequested) break;
@@ -89,7 +90,8 @@ namespace HieUserEditor.Services
                 var results = new List<AdUser>();
                 using var context = CreateContext();
                 using var filter = new UserPrincipal(context);
-                using var enumerator = UserPrincipal.FindAll(filter).GetEnumerator();
+                using var searcher = new PrincipalSearcher(filter);
+                using var enumerator = searcher.FindAll().GetEnumerator();
 
                 while (enumerator.MoveNext())
                 {
@@ -187,14 +189,18 @@ namespace HieUserEditor.Services
                 using var context = CreateContext();
                 using var filter = new GroupPrincipal(context);
 
-                foreach (var group in GroupPrincipal.FindAll(filter))
+                using var searcher = new PrincipalSearcher(filter);
+                foreach (var group in searcher.FindAll())
                 {
-                    results.Add(new AdGroup
+                    if (group is GroupPrincipal gp)
                     {
-                        Name = group.Name ?? string.Empty,
-                        DistinguishedName = group.DistinguishedName ?? string.Empty,
-                        Description = group.Description ?? string.Empty
-                    });
+                        results.Add(new AdGroup
+                        {
+                            Name = gp.Name ?? string.Empty,
+                            DistinguishedName = gp.DistinguishedName ?? string.Empty,
+                            Description = gp.Description ?? string.Empty
+                        });
+                    }
                 }
                 return (IEnumerable<AdGroup>)results;
             });
